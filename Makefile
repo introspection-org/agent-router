@@ -404,6 +404,8 @@ helm-test: helm-package  ## Test the helm chart with a dummy version.
 	@$(GO_TOOL) helm template ${HELM_CHART_PATH} --set controller.mcp.sessionEncryption.seed=my-test-seed | grep -q -- "seed: bXktdGVzdC1zZWVk"
 	@$(GO_TOOL) helm template ${HELM_CHART_PATH} --set controller.mcp.sessionEncryption.existingSecret=my-seed-secret | grep -q -- "name: my-seed-secret"
 	@! $(GO_TOOL) helm template ${HELM_CHART_PATH} --set controller.mcp.sessionEncryption.existingSecret=my-seed-secret | grep -q -- "mcp-session-encryption"
+	@! $(GO_TOOL) helm template ${HELM_CHART_PATH} | grep -q -- "serviceaccounts/token"
+	@$(GO_TOOL) helm template ${HELM_CHART_PATH} --set controller.serviceAccountTokens.grantClusterWide=true | grep -q -- "serviceaccounts/token"
 
 # This pushes the helm chart to the OCI registry, requiring the access to the registry endpoint.
 .PHONY: helm-push
