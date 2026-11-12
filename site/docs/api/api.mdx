@@ -2384,8 +2384,8 @@ References:
 <ApiField
   name="resource"
   type="string"
-  required="true"
-  description="Resource is the identifier of the protected resource.<br />This should match the MCPRoute's URL. For example, if the MCPRoute's URL is<br />`https://api.example.com/mcp`, the Resource should be `https://api.example.com/mcp`."
+  required="false"
+  description="Resource is the identifier of the protected resource.<br />This should match the MCPRoute's URL. For example, if the MCPRoute's URL is<br />`https://api.example.com/mcp`, the Resource should be `https://api.example.com/mcp`.<br />When omitted, the gateway derives the resource identifier per request from the<br />scheme, authority and path the client actually used to reach the MCP endpoint.<br />Leave it unset unless the gateway is fronted by something that rewrites the<br />externally visible URL in a way the forwarded headers do not reflect.<br />The derived identifier names the request's Host. Set Hostnames to restrict which hosts<br />it can name: the metadata endpoint is only reachable on hosts Hostnames matches. Without<br />Hostnames, every authority the Gateway listener accepts is reflected as-is.<br />Audiences need not be the resource URL; it is whatever the authorization server puts in<br />the token's `aud`. Only an authorization server that honours RFC 8707 binds `aud` to the<br />`resource` parameter, which clients set to the advertised identifier. With such a server<br />and a non-empty Audiences, a derived identifier has to agree with Audiences, so list every<br />address the route is reachable on, or set Resource explicitly."
 /><ApiField
   name="resourceName"
   type="string"
@@ -3178,10 +3178,12 @@ MCPRouteList contains a list of MCPRoute.
 - [APISchema](#github-com-envoyproxy-ai-gateway-api-v1beta1-apischema)
 - [AWSCredentialsFile](#github-com-envoyproxy-ai-gateway-api-v1beta1-awscredentialsfile)
 - [AWSOIDCExchangeToken](#github-com-envoyproxy-ai-gateway-api-v1beta1-awsoidcexchangetoken)
+- [AnthropicWorkloadIdentityFederationConfig](#github-com-envoyproxy-ai-gateway-api-v1beta1-anthropicworkloadidentityfederationconfig)
 - [AzureOIDCExchangeToken](#github-com-envoyproxy-ai-gateway-api-v1beta1-azureoidcexchangetoken)
 - [BackendSecurityPolicyAPIKey](#github-com-envoyproxy-ai-gateway-api-v1beta1-backendsecuritypolicyapikey)
 - [BackendSecurityPolicyAWSCredentials](#github-com-envoyproxy-ai-gateway-api-v1beta1-backendsecuritypolicyawscredentials)
 - [BackendSecurityPolicyAnthropicAPIKey](#github-com-envoyproxy-ai-gateway-api-v1beta1-backendsecuritypolicyanthropicapikey)
+- [BackendSecurityPolicyAnthropicCredentials](#github-com-envoyproxy-ai-gateway-api-v1beta1-backendsecuritypolicyanthropiccredentials)
 - [BackendSecurityPolicyAzureAPIKey](#github-com-envoyproxy-ai-gateway-api-v1beta1-backendsecuritypolicyazureapikey)
 - [BackendSecurityPolicyAzureCredentials](#github-com-envoyproxy-ai-gateway-api-v1beta1-backendsecuritypolicyazurecredentials)
 - [BackendSecurityPolicyCredentialOverride](#github-com-envoyproxy-ai-gateway-api-v1beta1-backendsecuritypolicycredentialoverride)
@@ -3189,7 +3191,6 @@ MCPRouteList contains a list of MCPRoute.
 - [BackendSecurityPolicyOIDC](#github-com-envoyproxy-ai-gateway-api-v1beta1-backendsecuritypolicyoidc)
 - [BackendSecurityPolicyOpenAICredentials](#github-com-envoyproxy-ai-gateway-api-v1beta1-backendsecuritypolicyopenaicredentials)
 - [BackendSecurityPolicySPIFFEJWTSVID](#github-com-envoyproxy-ai-gateway-api-v1beta1-backendsecuritypolicyspiffejwtsvid)
-- [BackendSecurityPolicyServiceAccountToken](#github-com-envoyproxy-ai-gateway-api-v1beta1-backendsecuritypolicyserviceaccounttoken)
 - [BackendSecurityPolicySpec](#github-com-envoyproxy-ai-gateway-api-v1beta1-backendsecuritypolicyspec)
 - [BackendSecurityPolicyStatus](#github-com-envoyproxy-ai-gateway-api-v1beta1-backendsecuritypolicystatus)
 - [BackendSecurityPolicyType](#github-com-envoyproxy-ai-gateway-api-v1beta1-backendsecuritypolicytype)
@@ -3629,6 +3630,57 @@ and store them in a temporary credentials file.
 />
 
 
+#### <a id="github-com-envoyproxy-ai-gateway-api-v1beta1-anthropicworkloadidentityfederationconfig">AnthropicWorkloadIdentityFederationConfig</a>
+
+
+
+**Appears in:**
+- [BackendSecurityPolicyAnthropicCredentials](#github-com-envoyproxy-ai-gateway-api-v1beta1-backendsecuritypolicyanthropiccredentials)
+
+AnthropicWorkloadIdentityFederationConfig specifies how the controller obtains an Anthropic access token via
+Anthropic Workload Identity Federation. The controller obtains a subject token, exchanges it at
+https://api.anthropic.com/v1/oauth/token with the RFC 7523 jwt-bearer grant for a short-lived Anthropic access
+token, and stores the access token in a secret, rotating it before it expires.
+
+The federation issuer, service account and federation rule must be configured in the Anthropic organization.
+Anthropic accepts a subject token with a "jti" claim only once, so the controller obtains a new subject token
+for every exchange. The lifetime of the issued access token is capped at twice the remaining lifetime of the
+subject token, and must be longer than the controller's credential pre-rotation window.
+
+https://platform.claude.com/docs/en/manage-claude/workload-identity-federation
+
+##### Fields
+
+
+
+<ApiField
+  name="organizationID"
+  type="string"
+  required="true"
+  description="OrganizationID is the UUID of the Anthropic organization."
+/><ApiField
+  name="serviceAccountID"
+  type="string"
+  required="true"
+  description="ServiceAccountID is the ID of the Anthropic service account the access token acts as, e.g. `svac_...`."
+/><ApiField
+  name="federationRuleID"
+  type="string"
+  required="true"
+  description="FederationRuleID is the ID of the Anthropic federation rule the subject token is evaluated against,<br />e.g. `fdrl_...`."
+/><ApiField
+  name="workspaceID"
+  type="string"
+  required="false"
+  description="WorkspaceID is the ID of the Anthropic workspace the access token is scoped to, e.g. `wrkspc_...`.<br />It is required when the federation rule is enabled for more than one workspace. When unset, Anthropic<br />selects the rule's only enabled workspace."
+/><ApiField
+  name="subjectToken"
+  type="[OpenAISubjectToken](#github-com-envoyproxy-ai-gateway-api-v1beta1-openaisubjecttoken)"
+  required="true"
+  description="SubjectToken specifies where the subject token is obtained from. The subject token must be a JWT."
+/>
+
+
 #### <a id="github-com-envoyproxy-ai-gateway-api-v1beta1-azureoidcexchangetoken">AzureOIDCExchangeToken</a>
 
 
@@ -3744,6 +3796,27 @@ BackendSecurityPolicyAnthropicAPIKey specifies the Anthropic API key.
   type="[SecretObjectReference](https://gateway-api.sigs.k8s.io/references/spec/#gateway.networking.k8s.io/v1.SecretObjectReference)"
   required="true"
   description="SecretRef is the reference to the secret containing the Anthropic API key.<br />ai-gateway must be given the permission to read this secret.<br />The key of the secret should be `apiKey`."
+/>
+
+
+#### <a id="github-com-envoyproxy-ai-gateway-api-v1beta1-backendsecuritypolicyanthropiccredentials">BackendSecurityPolicyAnthropicCredentials</a>
+
+
+
+**Appears in:**
+- [BackendSecurityPolicySpec](#github-com-envoyproxy-ai-gateway-api-v1beta1-backendsecuritypolicyspec)
+
+BackendSecurityPolicyAnthropicCredentials contains the supported authentication mechanisms to access Anthropic.
+
+##### Fields
+
+
+
+<ApiField
+  name="workloadIdentityFederationConfig"
+  type="[AnthropicWorkloadIdentityFederationConfig](#github-com-envoyproxy-ai-gateway-api-v1beta1-anthropicworkloadidentityfederationconfig)"
+  required="true"
+  description="WorkloadIdentityFederationConfig is the configuration for Anthropic Workload Identity Federation."
 />
 
 
@@ -3957,39 +4030,12 @@ BackendSecurityPolicySPIFFEJWTSVID specifies how to obtain a JWT-SVID from the S
   name="audience"
   type="string"
   required="true"
-  description="Audience is the audience (`aud` claim) of the requested JWT-SVID. The token exchange endpoint<br />validates it, so it must match the audience that endpoint expects, e.g. the audience configured<br />for the OpenAI Workload Identity Provider."
+  description="Audience is the audience (`aud` claim) of the requested JWT-SVID. The token exchange endpoint<br />validates it, so it must match the audience that endpoint expects, e.g. the audience configured<br />for the OpenAI Workload Identity Provider or the Anthropic federation rule."
 /><ApiField
   name="socketPath"
   type="string"
   required="false"
   description="SocketPath is the address of the SPIFFE Workload API, e.g. `unix:///run/spire/sockets/agent.sock`.<br />When unset, the SPIFFE_ENDPOINT_SOCKET environment variable of the controller is used."
-/>
-
-
-#### <a id="github-com-envoyproxy-ai-gateway-api-v1beta1-backendsecuritypolicyserviceaccounttoken">BackendSecurityPolicyServiceAccountToken</a>
-
-
-
-**Appears in:**
-- [OpenAISubjectToken](#github-com-envoyproxy-ai-gateway-api-v1beta1-openaisubjecttoken)
-
-BackendSecurityPolicyServiceAccountToken specifies how to obtain a Kubernetes ServiceAccount token from the
-TokenRequest API.
-
-##### Fields
-
-
-
-<ApiField
-  name="serviceAccountName"
-  type="string"
-  required="true"
-  description="ServiceAccountName is the name of the ServiceAccount in the namespace of the policy that the token is<br />requested for."
-/><ApiField
-  name="audience"
-  type="string"
-  required="true"
-  description="Audience is the audience (`aud` claim) of the requested token. The token exchange endpoint validates<br />it, so it must match the audience that endpoint expects, e.g. the audience configured for the<br />OpenAI Workload Identity Provider."
 />
 
 
@@ -4054,6 +4100,11 @@ Only one type of BackendSecurityPolicy can be defined.
   type="[BackendSecurityPolicyOpenAICredentials](#github-com-envoyproxy-ai-gateway-api-v1beta1-backendsecuritypolicyopenaicredentials)"
   required="false"
   description="OpenAICredentials is a mechanism to access OpenAI backend(s) without a static API key. The controller<br />exchanges a subject token for a short-lived access token via OpenAI Workload Identity Federation, which is<br />injected into the Authorization header."
+/><ApiField
+  name="anthropicCredentials"
+  type="[BackendSecurityPolicyAnthropicCredentials](#github-com-envoyproxy-ai-gateway-api-v1beta1-backendsecuritypolicyanthropiccredentials)"
+  required="false"
+  description="AnthropicCredentials is a mechanism to access Anthropic backend(s) without a static API key. The controller<br />exchanges a subject token for a short-lived access token via Anthropic Workload Identity Federation, which is<br />injected into the Authorization header."
 /><ApiField
   name="credentialOverride"
   type="[BackendSecurityPolicyCredentialOverride](#github-com-envoyproxy-ai-gateway-api-v1beta1-backendsecuritypolicycredentialoverride)"
@@ -4131,6 +4182,11 @@ BackendSecurityPolicyType specifies the type of auth mechanism used to access a 
   type="enum"
   required="false"
   description=""
+/><ApiField
+  name="AnthropicCredentials"
+  type="enum"
+  required="false"
+  description=""
 />
 #### <a id="github-com-envoyproxy-ai-gateway-api-v1beta1-credentialoverridefromdynamicmetadata">CredentialOverrideFromDynamicMetadata</a>
 
@@ -4182,7 +4238,7 @@ CredentialOverrideFromRequestHeaders sources the per-request credential from a r
   name="header"
   type="string"
   required="false"
-  description="Header is the name of the request header that carries the credential.<br />Defaults to the x-aigw-* header for the configured auth type:<br />  APIKey          → x-aigw-api-key<br />  AnthropicAPIKey → x-aigw-anthropic-api-key<br />  AzureAPIKey     → x-aigw-azure-api-key<br />  AzureCredentials → x-aigw-azure-access-token<br />  GCPCredentials  → x-aigw-gcp-access-token<br />  OpenAICredentials → x-aigw-openai-access-token<br />For AWSCredentials this is a prefix, not a single header name, since SigV4 needs three<br />inputs. Defaults to `x-aigw-aws-`, yielding:<br />  x-aigw-aws-access-key-id<br />  x-aigw-aws-secret-access-key<br />  x-aigw-aws-session-token     (optional; omit for long-lived credentials)<br />All three are stripped before the backend sees them. An access key ID without a secret<br />access key, or the reverse, fails the request instead of falling back.<br />Prefer FromDynamicMetadata for AWSCredentials. Headers are client-settable, and a secret<br />access key on the wire is a worse leak than an API key."
+  description="Header is the name of the request header that carries the credential.<br />Defaults to the x-aigw-* header for the configured auth type:<br />  APIKey          → x-aigw-api-key<br />  AnthropicAPIKey → x-aigw-anthropic-api-key<br />  AzureAPIKey     → x-aigw-azure-api-key<br />  AzureCredentials → x-aigw-azure-access-token<br />  GCPCredentials  → x-aigw-gcp-access-token<br />  OpenAICredentials → x-aigw-openai-access-token<br />  AnthropicCredentials → x-aigw-anthropic-access-token<br />For AWSCredentials this is a prefix, not a single header name, since SigV4 needs three<br />inputs. Defaults to `x-aigw-aws-`, yielding:<br />  x-aigw-aws-access-key-id<br />  x-aigw-aws-secret-access-key<br />  x-aigw-aws-session-token     (optional; omit for long-lived credentials)<br />All three are stripped before the backend sees them. An access key ID without a secret<br />access key, or the reverse, fails the request instead of falling back.<br />Prefer FromDynamicMetadata for AWSCredentials. Headers are client-settable, and a secret<br />access key on the wire is a worse leak than an API key."
 /><ApiField
   name="fallbackToConfigured"
   type="boolean"
@@ -5340,9 +5396,11 @@ a tool must match an include rule AND not match any exclude rule to be allowed.
 
 
 **Appears in:**
+- [AnthropicWorkloadIdentityFederationConfig](#github-com-envoyproxy-ai-gateway-api-v1beta1-anthropicworkloadidentityfederationconfig)
 - [OpenAIWorkloadIdentityFederationConfig](#github-com-envoyproxy-ai-gateway-api-v1beta1-openaiworkloadidentityfederationconfig)
 
-OpenAISubjectToken specifies the source of the subject token exchanged for an OpenAI access token.
+OpenAISubjectToken specifies the source of the subject token exchanged for an access token via workload
+identity federation. It is used by both OpenAICredentials and AnthropicCredentials.
 Exactly one source must be configured.
 
 ##### Fields
@@ -5358,12 +5416,7 @@ Exactly one source must be configured.
   name="spiffeJWTSVID"
   type="[BackendSecurityPolicySPIFFEJWTSVID](#github-com-envoyproxy-ai-gateway-api-v1beta1-backendsecuritypolicyspiffejwtsvid)"
   required="false"
-  description="SPIFFEJWTSVID obtains the subject token as a JWT-SVID from the SPIFFE Workload API.<br />The SPIFFE identity is owned by the controller, not by the policy: the JWT-SVID is issued for the<br />controller's SPIFFE ID. This differs from OIDCExchangeToken, where the policy supplies its own<br />credentials. Every policy using this source authenticates as the controller and can obtain access<br />tokens for any OpenAI service account mapped to the controller's SPIFFE ID, so only trusted cluster<br />admins should be allowed to create such policies."
-/><ApiField
-  name="serviceAccountToken"
-  type="[BackendSecurityPolicyServiceAccountToken](#github-com-envoyproxy-ai-gateway-api-v1beta1-backendsecuritypolicyserviceaccounttoken)"
-  required="false"
-  description="ServiceAccountToken obtains the subject token from the Kubernetes TokenRequest API, as a token for a<br />ServiceAccount in the namespace of the policy. The issuer of the token is the Kubernetes API server.<br />Unlike SPIFFEJWTSVID, each policy authenticates as its own ServiceAccount. The controller needs the<br />`create` permission on the `serviceaccounts/token` subresource for that ServiceAccount, which can be<br />granted per namespace and per ServiceAccount name with a Role and RoleBinding.<br />A new token is requested for every token exchange, including retries, so that token exchange<br />endpoints accepting each token ID (`jti` claim) only once can be used."
+  description="SPIFFEJWTSVID obtains the subject token as a JWT-SVID from the SPIFFE Workload API.<br />The SPIFFE identity is owned by the controller, not by the policy: the JWT-SVID is issued for the<br />controller's SPIFFE ID. This differs from OIDCExchangeToken, where the policy supplies its own<br />credentials. Every policy using this source authenticates as the controller and can obtain access<br />tokens for any service account mapped to the controller's SPIFFE ID, so only trusted cluster<br />admins should be allowed to create such policies."
 />
 
 
@@ -5425,8 +5478,8 @@ References:
 <ApiField
   name="resource"
   type="string"
-  required="true"
-  description="Resource is the identifier of the protected resource.<br />This should match the MCPRoute's URL. For example, if the MCPRoute's URL is<br />`https://api.example.com/mcp`, the Resource should be `https://api.example.com/mcp`."
+  required="false"
+  description="Resource is the identifier of the protected resource.<br />This should match the MCPRoute's URL. For example, if the MCPRoute's URL is<br />`https://api.example.com/mcp`, the Resource should be `https://api.example.com/mcp`.<br />When omitted, the gateway derives the resource identifier per request from the<br />scheme, authority and path the client actually used to reach the MCP endpoint.<br />Leave it unset unless the gateway is fronted by something that rewrites the<br />externally visible URL in a way the forwarded headers do not reflect.<br />The derived identifier names the request's Host. Set Hostnames to restrict which hosts<br />it can name: the metadata endpoint is only reachable on hosts Hostnames matches. Without<br />Hostnames, every authority the Gateway listener accepts is reflected as-is.<br />Audiences need not be the resource URL; it is whatever the authorization server puts in<br />the token's `aud`. Only an authorization server that honours RFC 8707 binds `aud` to the<br />`resource` parameter, which clients set to the advertised identifier. With such a server<br />and a non-empty Audiences, a derived identifier has to agree with Audiences, so list every<br />address the route is reachable on, or set Resource explicitly."
 /><ApiField
   name="resourceName"
   type="string"
