@@ -1239,7 +1239,7 @@ func TestBackendSecurityPolicyController_RotateCredential_AnthropicCredentials_N
 		},
 	}
 	_, err := c.rotateCredential(t.Context(), bsp)
-	require.EqualError(t, err, "one of spiffeJWTSVID or oidcExchangeToken must be defined, namespace default name anthropic-bsp")
+	require.EqualError(t, err, "one of spiffeJWTSVID, serviceAccountToken or oidcExchangeToken must be defined, namespace default name anthropic-bsp")
 }
 
 func TestNewBackendSecurityPolicyController_RotateCredentialAwsCredentialFile(t *testing.T) {
