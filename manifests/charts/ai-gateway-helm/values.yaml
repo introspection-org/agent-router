@@ -129,6 +129,16 @@ controller:
     # If not set and create is true, a name is generated using the fullname template
     name: ""
 
+  # -- ServiceAccount tokens --
+  # BackendSecurityPolicies with subjectToken.serviceAccountToken need the controller to have "create" on
+  # "serviceaccounts/token" for the referenced ServiceAccount. This is not granted by default: grant it per
+  # namespace and ServiceAccount name with a Role and RoleBinding, as in examples/basic/openai-serviceaccount-token.yaml.
+  serviceAccountTokens:
+    # If true, the controller's ClusterRole allows requesting tokens for every ServiceAccount in every namespace.
+    # Anyone who can create a BackendSecurityPolicy in a namespace can then make the controller authenticate as
+    # any ServiceAccount of that namespace.
+    grantClusterWide: false
+
   # Enable leader election mechanism for protecting against split brain if multiple operator pods/replicas are started.
   leaderElection:
     enabled: true
@@ -141,6 +151,11 @@ controller:
     # Sync timeout for the Kubernetes cache. If the cache is not synced within this time, the controller will exit.
     # Default is 2 minutes.
     cacheSyncTimeout: 2m
+
+  # How long before expiry the controller rotates short-lived BackendSecurityPolicy credentials
+  #  Must be positive and shorter than the credential lifetime.
+  # Default is 5 minutes.
+  credentialPreRotationWindow: 5m
 
   # -- Deployment configs --
   image:
@@ -198,6 +213,12 @@ controller:
   ##   # Enabled by default for troubleshooting purposes given the impact is negligible when not in use.
   ##   - name: DISABLE_PPROF
   ##     value: "true"
+  ##   # OpenAI Workload Identity Federation token exchange requests will use this proxy if set.
+  ##   - name: AI_GATEWAY_OPENAI_PROXY_URL
+  ##     value: "http://proxy.example.com:8080"
+  ##   # Anthropic Workload Identity Federation token exchange requests will use this proxy if set.
+  ##   - name: AI_GATEWAY_ANTHROPIC_PROXY_URL
+  ##     value: "http://proxy.example.com:8080"
   extraEnvVars: []
 
   # Example of volumes

@@ -239,6 +239,67 @@ func TestBackendSecurityPolicies(t *testing.T) {
 		{name: "aws_credential_override.yaml"},
 		{name: "gcp_oidc.yaml"},
 		{name: "anthropic-apikey.yaml"},
+		{name: "openai_spiffe.yaml"},
+		{name: "openai_oidc.yaml"},
+		{
+			name:   "openai_missing_subject_token.yaml",
+			expErr: "Exactly one of oidcExchangeToken, spiffeJWTSVID or serviceAccountToken must be specified",
+		},
+		{
+			name:   "openai_multiple_subject_tokens.yaml",
+			expErr: "Exactly one of oidcExchangeToken, spiffeJWTSVID or serviceAccountToken must be specified",
+		},
+		{name: "openai_serviceaccount_token.yaml"},
+		{
+			name:   "openai_serviceaccount_token_with_spiffe.yaml",
+			expErr: "Exactly one of oidcExchangeToken, spiffeJWTSVID or serviceAccountToken must be specified",
+		},
+		{
+			name:   "openai_serviceaccount_token_missing_audience.yaml",
+			expErr: "spec.openAICredentials.workloadIdentityFederationConfig.subjectToken.serviceAccountToken.audience in body should be at least 1 chars long",
+		},
+		{
+			name:   "openai_serviceaccount_token_empty_name.yaml",
+			expErr: "spec.openAICredentials.workloadIdentityFederationConfig.subjectToken.serviceAccountToken.serviceAccountName in body should be at least 1 chars long",
+		},
+		{
+			name:   "openai_missing_identity_provider_id.yaml",
+			expErr: "spec.openAICredentials.workloadIdentityFederationConfig.identityProviderID in body should be at least 1 chars long",
+		},
+		{
+			name:   "openai_invalid_socket_path.yaml",
+			expErr: "spec.openAICredentials.workloadIdentityFederationConfig.subjectToken.spiffeJWTSVID.socketPath in body should match",
+		},
+		{
+			name:   "openai_with_apikey.yaml",
+			expErr: "When type is OpenAICredentials, only openAICredentials field should be set",
+		},
+		{
+			name:   "apikey_with_openai_credentials.yaml",
+			expErr: "When type is APIKey, only apiKey field should be set",
+		},
+		{name: "anthropic_spiffe.yaml"},
+		{name: "anthropic_oidc.yaml"},
+		{
+			name:   "anthropic_missing_subject_token.yaml",
+			expErr: "Exactly one of oidcExchangeToken or spiffeJWTSVID must be specified",
+		},
+		{
+			name:   "anthropic_multiple_subject_tokens.yaml",
+			expErr: "Exactly one of oidcExchangeToken or spiffeJWTSVID must be specified",
+		},
+		{
+			name:   "anthropic_missing_federation_rule_id.yaml",
+			expErr: "spec.anthropicCredentials.workloadIdentityFederationConfig.federationRuleID in body should be at least 1 chars long",
+		},
+		{
+			name:   "anthropic_with_apikey.yaml",
+			expErr: "When type is AnthropicCredentials, only anthropicCredentials field should be set",
+		},
+		{
+			name:   "openai_with_anthropic_credentials.yaml",
+			expErr: "When type is OpenAICredentials, only openAICredentials field should be set",
+		},
 		{name: "targetrefs_basic.yaml"},
 		{name: "targetrefs_multiple.yaml"},
 		{name: "targetrefs_inferencepool.yaml"},

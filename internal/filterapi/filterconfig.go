@@ -223,6 +223,10 @@ type BackendAuth struct {
 	AzureAuth *AzureAuth `json:"azure,omitempty"`
 	// GCPAuth specifies the location of GCP credential file.
 	GCPAuth *GCPAuth `json:"gcp,omitempty"`
+	// OpenAIAuth specifies the OpenAI access token obtained via token exchange.
+	OpenAIAuth *OpenAIAuth `json:"openai,omitempty"`
+	// AnthropicAuth specifies the Anthropic access token obtained via token exchange.
+	AnthropicAuth *AnthropicAuth `json:"anthropic,omitempty"`
 	// CredentialOverride, when non-nil, sources the credential per-request instead of the
 	// static credential above. nil disables per-request sourcing (the default).
 	CredentialOverride *CredentialOverride `json:"credentialOverride,omitempty"`
@@ -309,6 +313,36 @@ type AzureAuth struct {
 
 // LogValue implements slog.LogValuer for AzureAuth to redact sensitive information.
 func (a AzureAuth) LogValue() slog.Value {
+	return slog.GroupValue(slog.String("accessToken", "[REDACTED]"))
+}
+
+// OpenAIAuth defines the OpenAI access token and the optional organization and project headers.
+type OpenAIAuth struct {
+	// AccessToken is the access token as a literal string.
+	AccessToken string `json:"accessToken"`
+	// Organization is sent in the OpenAI-Organization header when set.
+	Organization string `json:"organization,omitempty"`
+	// Project is sent in the OpenAI-Project header when set.
+	Project string `json:"project,omitempty"`
+}
+
+// LogValue implements slog.LogValuer for OpenAIAuth to redact sensitive information.
+func (a OpenAIAuth) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.String("accessToken", "[REDACTED]"),
+		slog.String("organization", a.Organization),
+		slog.String("project", a.Project),
+	)
+}
+
+// AnthropicAuth defines the Anthropic access token obtained via workload identity federation.
+type AnthropicAuth struct {
+	// AccessToken is the access token as a literal string.
+	AccessToken string `json:"accessToken"`
+}
+
+// LogValue implements slog.LogValuer for AnthropicAuth to redact sensitive information.
+func (a AnthropicAuth) LogValue() slog.Value {
 	return slog.GroupValue(slog.String("accessToken", "[REDACTED]"))
 }
 
