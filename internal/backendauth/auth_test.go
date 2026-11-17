@@ -56,6 +56,18 @@ aws_secret_access_key = test
 				AnthropicAPIKey: &filterapi.AnthropicAPIKeyAuth{Key: "TEST"},
 			},
 		},
+		{
+			name: "AnthropicAuth",
+			config: &filterapi.BackendAuth{
+				AnthropicAuth: &filterapi.AnthropicAuth{AccessToken: "some-access-token"},
+			},
+		},
+		{
+			name: "OpenAIAuth",
+			config: &filterapi.BackendAuth{
+				OpenAIAuth: &filterapi.OpenAIAuth{AccessToken: "some-access-token", Organization: "org-123"},
+			},
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			_, err := NewHandler(t.Context(), tt.config)
