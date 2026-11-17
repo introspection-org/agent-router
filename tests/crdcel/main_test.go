@@ -282,11 +282,11 @@ func TestBackendSecurityPolicies(t *testing.T) {
 		{name: "anthropic_oidc.yaml"},
 		{
 			name:   "anthropic_missing_subject_token.yaml",
-			expErr: "Exactly one of oidcExchangeToken or spiffeJWTSVID must be specified",
+			expErr: "Exactly one of oidcExchangeToken, spiffeJWTSVID or serviceAccountToken must be specified",
 		},
 		{
 			name:   "anthropic_multiple_subject_tokens.yaml",
-			expErr: "Exactly one of oidcExchangeToken or spiffeJWTSVID must be specified",
+			expErr: "Exactly one of oidcExchangeToken, spiffeJWTSVID or serviceAccountToken must be specified",
 		},
 		{
 			name:   "anthropic_missing_federation_rule_id.yaml",
